@@ -392,7 +392,7 @@ class WP_Theme_JSON_Gutenberg {
 	 * @since 7.0.0 Added type markers to the schema for boolean values.
 	 * @since 7.0.0 Added `dimensions.width`, `dimensions.height`, and
 	 *              `typography.textIndent` properties.
-	 * @since 7.1.0 Added `viewport` property.
+	 * @since 7.1.0 Added `viewport` and `featuredImage.focalPoint` properties.
 	 * @var array
 	 */
 	const VALID_SETTINGS = array(
@@ -440,6 +440,9 @@ class WP_Theme_JSON_Gutenberg {
 			'minHeight'           => null,
 			'minWidth'            => null,
 			'width'               => null,
+		),
+		'featuredImage'                 => array(
+			'focalPoint' => true,
 		),
 		'layout'                        => array(
 			'contentSize'                   => null,
@@ -1308,9 +1311,10 @@ class WP_Theme_JSON_Gutenberg {
 		 */
 		foreach ( $valid_block_names as $block ) {
 			$schema_settings_blocks[ $block ] = static::VALID_SETTINGS;
-			// `viewport` and `blockVisibility` are global-only settings and cannot be set per block for now.
+			// `viewport`, `blockVisibility`, and `featuredImage` are global-only settings and cannot be set per block.
 			unset( $schema_settings_blocks[ $block ]['viewport'] );
 			unset( $schema_settings_blocks[ $block ]['blockVisibility'] );
+			unset( $schema_settings_blocks[ $block ]['featuredImage'] );
 			$schema_styles_blocks[ $block ]             = $styles_non_top_level;
 			$schema_styles_blocks[ $block ]['elements'] = $schema_styles_elements;
 

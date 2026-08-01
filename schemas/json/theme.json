@@ -71,6 +71,23 @@
 				}
 			}
 		},
+		"settingsFeaturedImageProperties": {
+			"type": "object",
+			"properties": {
+				"featuredImage": {
+					"description": "Settings related to featured images.",
+					"type": "object",
+					"properties": {
+						"focalPoint": {
+							"description": "Allow users to set a focal point for a post's featured image.",
+							"type": "boolean",
+							"default": false
+						}
+					},
+					"additionalProperties": false
+				}
+			}
+		},
 		"settingsBorderProperties": {
 			"type": "object",
 			"properties": {
@@ -916,6 +933,7 @@
 				{ "$ref": "#/definitions/settingsBorderProperties" },
 				{ "$ref": "#/definitions/settingsColorProperties" },
 				{ "$ref": "#/definitions/settingsDimensionsProperties" },
+				{ "$ref": "#/definitions/settingsFeaturedImageProperties" },
 				{ "$ref": "#/definitions/settingsLayoutProperties" },
 				{ "$ref": "#/definitions/settingsLightboxProperties" },
 				{ "$ref": "#/definitions/settingsPositionProperties" },
@@ -950,6 +968,7 @@
 				"border",
 				"color",
 				"dimensions",
+				"featuredImage",
 				"layout",
 				"lightbox",
 				"position",

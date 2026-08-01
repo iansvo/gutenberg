@@ -21,6 +21,7 @@ import {
 	__experimentalUseBorderProps as useBorderProps,
 	__experimentalGetShadowClassesAndStyles as getShadowClassesAndStyles,
 	useBlockEditingMode,
+	useSetting,
 	privateApis as blockEditorPrivateApis,
 	store as blockEditorStore,
 } from '@wordpress/block-editor';
@@ -94,7 +95,10 @@ export default function PostFeaturedImageEdit( {
 		rel,
 		linkTarget,
 		useFirstImageFromPost,
+		useFeaturedImageFocalPoint,
 	} = attributes;
+	const featuredImageFocalPointEnabled =
+		useSetting( 'featuredImage.focalPoint' ) === true;
 	const [ temporaryURL, setTemporaryURL ] = useState();
 
 	const [ storedFeaturedImage, setFeaturedImage ] = useEntityProp(
@@ -112,6 +116,20 @@ export default function PostFeaturedImageEdit( {
 		'content',
 		postId
 	);
+	const [ postMeta ] = useEntityProp(
+		'postType',
+		postTypeSlug,
+		'meta',
+		postId
+	);
+	const focalPoint = postMeta?._thumbnail_focal_point;
+	const hasValidFocalPoint =
+		Number.isFinite( focalPoint?.x ) &&
+		Number.isFinite( focalPoint?.y ) &&
+		focalPoint.x >= 0 &&
+		focalPoint.x <= 1 &&
+		focalPoint.y >= 0 &&
+		focalPoint.y <= 1;
 
 	const featuredImage = useMemo( () => {
 		if ( storedFeaturedImage ) {
@@ -279,6 +297,7 @@ export default function PostFeaturedImageEdit( {
 								linkTarget: '_self',
 								rel: '',
 								sizeSlug: DEFAULT_MEDIA_SIZE_SLUG,
+								useFeaturedImageFocalPoint: false,
 							} );
 						} }
 						dropdownMenuProps={ dropdownMenuProps }
@@ -373,6 +392,30 @@ export default function PostFeaturedImageEdit( {
 								}
 							/>
 						) }
+						{ featuredImageFocalPointEnabled && (
+							<ToolsPanelItem
+								label={ __( 'Use featured image focal point' ) }
+								isShownByDefault
+								hasValue={ () => useFeaturedImageFocalPoint }
+								onDeselect={ () =>
+									setAttributes( {
+										useFeaturedImageFocalPoint: false,
+									} )
+								}
+							>
+								<ToggleControl
+									label={ __(
+										'Use featured image focal point'
+									) }
+									checked={ useFeaturedImageFocalPoint }
+									onChange={ ( value ) =>
+										setAttributes( {
+											useFeaturedImageFocalPoint: value,
+										} )
+									}
+								/>
+							</ToolsPanelItem>
+						) }
 					</ToolsPanel>
 				</InspectorControls>
 			) }
@@ -422,6 +465,13 @@ export default function PostFeaturedImageEdit( {
 			: hasDimensionValue( width ) && 'auto',
 		width: hasDimensionValue( width ) ? width : !! aspectRatio && '100%',
 		objectFit: !! ( height || aspectRatio ) && scale,
+		objectPosition:
+			featuredImageFocalPointEnabled &&
+			useFeaturedImageFocalPoint &&
+			storedFeaturedImage &&
+			hasValidFocalPoint
+				? `${ focalPoint.x * 100 }% ${ focalPoint.y * 100 }%`
+				: undefined,
 	};
 
 	/**

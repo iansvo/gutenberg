@@ -184,6 +184,30 @@ class WP_Theme_JSON_Gutenberg_Test extends WP_UnitTestCase {
 		$this->assertArrayNotHasKey( 'blockVisibility', $actual['blocks']['core/group'] ?? array() );
 	}
 
+	public function test_get_settings_featured_image_focal_point_is_global_only() {
+		$theme_json_data = array(
+			'version'  => WP_Theme_JSON_Gutenberg::LATEST_SCHEMA,
+			'settings' => array(
+				'featuredImage' => array(
+					'focalPoint' => true,
+				),
+				'blocks'        => array(
+					'core/post-featured-image' => array(
+						'featuredImage' => array(
+							'focalPoint' => false,
+						),
+					),
+				),
+			),
+		);
+		$sanitized       = WP_Theme_JSON_Gutenberg::remove_insecure_properties( $theme_json_data );
+		$theme_json      = new WP_Theme_JSON_Gutenberg( $sanitized );
+		$actual          = $theme_json->get_settings();
+
+		$this->assertTrue( $actual['featuredImage']['focalPoint'] );
+		$this->assertArrayNotHasKey( 'featuredImage', $actual['blocks']['core/post-featured-image'] ?? array() );
+	}
+
 	public function test_get_settings_presets_are_keyed_by_origin() {
 		$default_origin = new WP_Theme_JSON_Gutenberg(
 			array(

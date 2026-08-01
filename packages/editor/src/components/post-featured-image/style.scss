@@ -66,7 +66,7 @@
 .editor-post-featured-image__preview {
 	height: auto !important;
 	outline: $border-width solid rgba($black, 0.1);
-	@include checkerboard-background( 12px );
+	@include checkerboard-background(12px);
 
 	.editor-post-featured-image__preview-image {
 		object-fit: cover;
@@ -96,5 +96,35 @@
 	.editor-post-featured-image__action {
 		flex-grow: 1;
 		justify-content: center;
+	}
+}
+
+.editor-post-featured-image__container-is-focal-point {
+	display: grid;
+	gap: $grid-unit-15;
+
+	.editor-post-featured-image__focal-point {
+		display: contents;
+
+		.components-focal-point-picker-wrapper {
+			grid-row: 1;
+		}
+
+		.focal-point-picker__controls {
+			grid-row: 4;
+			gap: $grid-unit-15;
+			font-variant-numeric: tabular-nums;
+		}
+
+		> legend {
+			grid-row: 3;
+			margin: 0;
+		}
+	}
+
+	.editor-post-featured-image__actions:not(.editor-post-featured-image__actions-missing-image) {
+		position: static;
+		grid-row: 2;
+		opacity: 1;
 	}
 }

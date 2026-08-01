@@ -9,14 +9,16 @@ import {
 	withFilters,
 	__experimentalHStack as HStack,
 	Notice,
+	FocalPointPicker,
 } from '@wordpress/components';
 import { isBlobURL } from '@wordpress/blob';
-import { useState, useRef } from '@wordpress/element';
+import { useEffect, useState, useRef } from '@wordpress/element';
 import { compose } from '@wordpress/compose';
 import { useSelect, withDispatch, withSelect } from '@wordpress/data';
 import {
 	MediaUpload,
 	MediaUploadCheck,
+	useSetting,
 	store as blockEditorStore,
 } from '@wordpress/block-editor';
 import { store as coreStore } from '@wordpress/core-data';
@@ -90,11 +92,21 @@ function PostFeaturedImage( {
 	noticeUI,
 	noticeOperations,
 	isRequestingFeaturedImageMedia,
+	featuredImageFocalPoint,
+	onUpdateFocalPoint,
 } ) {
 	const returnsFocusRef = useRef( false );
 	const [ isLoading, setIsLoading ] = useState( false );
 	const { getSettings } = useSelect( blockEditorStore );
 	const { mediaSourceUrl } = getMediaDetails( media, currentPostId );
+	const focalPointEnabled = useSetting( 'featuredImage.focalPoint' ) === true;
+	const [ previewFocalPoint, setPreviewFocalPoint ] = useState(
+		featuredImageFocalPoint ?? { x: 0.5, y: 0.5 }
+	);
+
+	useEffect( () => {
+		setPreviewFocalPoint( featuredImageFocalPoint ?? { x: 0.5, y: 0.5 } );
+	}, [ featuredImageFocalPoint ] );
 
 	function onDropFiles( filesList ) {
 		getSettings().mediaUpload( {
@@ -156,6 +168,8 @@ function PostFeaturedImage( {
 
 	const isMissingMedia =
 		! isRequestingFeaturedImageMedia && !! featuredImageId && ! media;
+	const showFocalPointPicker =
+		focalPointEnabled && !! featuredImageId && !! media;
 
 	return (
 		<PostFeaturedImageCheck>
@@ -180,8 +194,16 @@ function PostFeaturedImage( {
 						allowedTypes={ ALLOWED_MEDIA_TYPES }
 						modalClass="editor-post-featured-image__media-modal"
 						render={ ( { open } ) => (
-							<div className="editor-post-featured-image__container">
-								{ isMissingMedia ? (
+							<div
+								className={ clsx(
+									'editor-post-featured-image__container',
+									{
+										'editor-post-featured-image__container-is-focal-point':
+											showFocalPointPicker,
+									}
+								) }
+							>
+								{ isMissingMedia && (
 									<Notice
 										status="warning"
 										isDismissible={ false }
@@ -190,52 +212,68 @@ function PostFeaturedImage( {
 											'Could not retrieve the featured image data.'
 										) }
 									</Notice>
-								) : (
-									<Button
-										__next40pxDefaultSize
-										ref={ returnFocus }
-										className={
-											! featuredImageId
-												? 'editor-post-featured-image__toggle'
-												: 'editor-post-featured-image__preview'
-										}
-										onClick={ open }
-										aria-label={
-											! featuredImageId
-												? null
-												: __(
-														'Edit or replace the featured image'
-												  )
-										}
-										aria-describedby={
-											! featuredImageId
-												? null
-												: `editor-post-featured-image-${ featuredImageId }-describedby`
-										}
-										aria-haspopup="dialog"
-										disabled={ isLoading }
-										accessibleWhenDisabled
-									>
-										{ !! featuredImageId && media && (
-											<img
-												className="editor-post-featured-image__preview-image"
-												src={ mediaSourceUrl }
-												alt={ getImageDescription(
-													media
-												) }
-											/>
-										) }
-										{ ( isLoading ||
-											isRequestingFeaturedImageMedia ) && (
-											<Spinner />
-										) }
-										{ ! featuredImageId &&
-											! isLoading &&
-											( postType?.labels
-												?.set_featured_image ||
-												DEFAULT_SET_FEATURE_IMAGE_LABEL ) }
-									</Button>
 								) }
+								{ ! isMissingMedia && showFocalPointPicker && (
+									<FocalPointPicker
+										className="editor-post-featured-image__focal-point"
+										label={ __( 'Focal point' ) }
+										url={ mediaSourceUrl }
+										value={ previewFocalPoint }
+										onDragStart={ setPreviewFocalPoint }
+										onDrag={ setPreviewFocalPoint }
+										onChange={ ( focalPoint ) => {
+											setPreviewFocalPoint( focalPoint );
+											onUpdateFocalPoint( focalPoint );
+										} }
+									/>
+								) }
+								{ ! isMissingMedia &&
+									! showFocalPointPicker && (
+										<Button
+											__next40pxDefaultSize
+											ref={ returnFocus }
+											className={
+												! featuredImageId
+													? 'editor-post-featured-image__toggle'
+													: 'editor-post-featured-image__preview'
+											}
+											onClick={ open }
+											aria-label={
+												! featuredImageId
+													? null
+													: __(
+															'Edit or replace the featured image'
+													  )
+											}
+											aria-describedby={
+												! featuredImageId
+													? null
+													: `editor-post-featured-image-${ featuredImageId }-describedby`
+											}
+											aria-haspopup="dialog"
+											disabled={ isLoading }
+											accessibleWhenDisabled
+										>
+											{ !! featuredImageId && media && (
+												<img
+													className="editor-post-featured-image__preview-image"
+													src={ mediaSourceUrl }
+													alt={ getImageDescription(
+														media
+													) }
+												/>
+											) }
+											{ ( isLoading ||
+												isRequestingFeaturedImageMedia ) && (
+												<Spinner />
+											) }
+											{ ! featuredImageId &&
+												! isLoading &&
+												( postType?.labels
+													?.set_featured_image ||
+													DEFAULT_SET_FEATURE_IMAGE_LABEL ) }
+										</Button>
+									) }
 								{ !! featuredImageId && (
 									<HStack
 										className={ clsx(
@@ -251,19 +289,6 @@ function PostFeaturedImage( {
 										<Button
 											__next40pxDefaultSize
 											className="editor-post-featured-image__action"
-											onClick={ open }
-											aria-haspopup="dialog"
-											variant={
-												isMissingMedia
-													? 'secondary'
-													: undefined
-											}
-										>
-											{ __( 'Replace' ) }
-										</Button>
-										<Button
-											__next40pxDefaultSize
-											className="editor-post-featured-image__action"
 											onClick={ () => {
 												onRemoveImage();
 												// Signal that the toggle button should be focused,
@@ -272,13 +297,28 @@ function PostFeaturedImage( {
 												returnsFocusRef.current = true;
 											} }
 											variant={
-												isMissingMedia
+												isMissingMedia ||
+												showFocalPointPicker
 													? 'secondary'
 													: undefined
 											}
 											isDestructive={ isMissingMedia }
 										>
 											{ __( 'Remove' ) }
+										</Button>
+										<Button
+											__next40pxDefaultSize
+											className="editor-post-featured-image__action"
+											onClick={ open }
+											aria-haspopup="dialog"
+											variant={
+												isMissingMedia ||
+												showFocalPointPicker
+													? 'secondary'
+													: undefined
+											}
+										>
+											{ __( 'Replace' ) }
 										</Button>
 									</HStack>
 								) }
@@ -308,6 +348,8 @@ const applyWithSelect = withSelect( ( select ) => {
 		currentPostId: getCurrentPostId(),
 		postType: getPostType( getEditedPostAttribute( 'type' ) ),
 		featuredImageId,
+		featuredImageFocalPoint:
+			getEditedPostAttribute( 'meta' )?._thumbnail_focal_point,
 		isRequestingFeaturedImageMedia:
 			!! featuredImageId &&
 			! hasFinishedResolution( 'getEntityRecord', [
@@ -345,6 +387,16 @@ const applyWithDispatch = withDispatch(
 			onRemoveImage() {
 				editPost( { featured_media: 0 } );
 			},
+			onUpdateFocalPoint( focalPoint ) {
+				editPost( {
+					meta: {
+						...select( editorStore ).getEditedPostAttribute(
+							'meta'
+						),
+						_thumbnail_focal_point: focalPoint,
+					},
+				} );
+			},
 		};
 	}
 );
@@ -352,15 +404,17 @@ const applyWithDispatch = withDispatch(
 /**
  * Renders the component for managing the featured image of a post.
  *
- * @param {Object}   props                  Props.
- * @param {number}   props.currentPostId    ID of the current post.
- * @param {number}   props.featuredImageId  ID of the featured image.
- * @param {Function} props.onUpdateImage    Function to call when the image is updated.
- * @param {Function} props.onRemoveImage    Function to call when the image is removed.
- * @param {Object}   props.media            The media object representing the featured image.
- * @param {string}   props.postType         Post type.
- * @param {Element}  props.noticeUI         UI for displaying notices.
- * @param {Object}   props.noticeOperations Operations for managing notices.
+ * @param {Object}   props                         Props.
+ * @param {number}   props.currentPostId           ID of the current post.
+ * @param {number}   props.featuredImageId         ID of the featured image.
+ * @param {Function} props.onUpdateImage           Function to call when the image is updated.
+ * @param {Function} props.onRemoveImage           Function to call when the image is removed.
+ * @param {Object}   props.media                   The media object representing the featured image.
+ * @param {string}   props.postType                Post type.
+ * @param {Element}  props.noticeUI                UI for displaying notices.
+ * @param {Object}   props.noticeOperations        Operations for managing notices.
+ * @param {Object}   props.featuredImageFocalPoint Current post focal point.
+ * @param {Function} props.onUpdateFocalPoint      Function to update the post focal point.
  *
  * @return {Element} Component to be rendered .
  */

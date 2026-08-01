@@ -64,6 +64,20 @@ function render_block_core_post_featured_image( $attributes, $content, $block ) 
 	if ( ! empty( $attributes['scale'] ) ) {
 		$extra_styles .= esc_attr( safecss_filter_attr( 'object-fit:' . $attributes['scale'] ) ) . ';';
 	}
+	$focal_point_style = '';
+	if ( ! empty( $attributes['useFeaturedImageFocalPoint'] ) && true === wp_get_global_settings( array( 'featuredImage', 'focalPoint' ) ) ) {
+		$focal_point = get_post_meta( $post_ID, '_thumbnail_focal_point', true );
+		if (
+			is_array( $focal_point ) &&
+			isset( $focal_point['x'], $focal_point['y'] ) &&
+			is_numeric( $focal_point['x'] ) &&
+			is_numeric( $focal_point['y'] ) &&
+			$focal_point['x'] >= 0 && $focal_point['x'] <= 1 &&
+			$focal_point['y'] >= 0 && $focal_point['y'] <= 1
+		) {
+			$focal_point_style = sprintf( 'object-position:%s%% %s%%;', $focal_point['x'] * 100, $focal_point['y'] * 100 );
+		}
+	}
 	if ( ! empty( $attributes['style']['shadow'] ) ) {
 		$shadow_styles = wp_style_engine_get_styles( array( 'shadow' => $attributes['style']['shadow'] ) );
 
@@ -77,6 +91,17 @@ function render_block_core_post_featured_image( $attributes, $content, $block ) 
 	}
 
 	$featured_image = get_the_post_thumbnail( $post_ID, $size_slug, $attr );
+	if ( $featured_image && $focal_point_style ) {
+		$featured_image_processor = new WP_HTML_Tag_Processor( $featured_image );
+		if ( $featured_image_processor->next_tag( 'img' ) ) {
+			$existing_style = $featured_image_processor->get_attribute( 'style' );
+			$style          = is_string( $existing_style ) && '' !== $existing_style
+				? rtrim( $existing_style, ';' ) . ';' . $focal_point_style
+				: $focal_point_style;
+			$featured_image_processor->set_attribute( 'style', $style );
+			$featured_image = $featured_image_processor->get_updated_html();
+		}
+	}
 
 	// Get the first image from the post.
 	if ( $attributes['useFirstImageFromPost'] && ! $featured_image ) {

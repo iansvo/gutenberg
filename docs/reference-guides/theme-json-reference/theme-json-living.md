@@ -130,6 +130,16 @@ Settings related to dimensions.
 
 ---
 
+### featuredImage
+
+Settings related to featured images.
+
+| Property | Description | Type | Default |
+| -------- | ----------- | ---- | ------- |
+| focalPoint | Allow users to set a focal point for a post's featured image. | `boolean` | `false` |
+
+---
+
 ### layout
 
 Settings related to layout.

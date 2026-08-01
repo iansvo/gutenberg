@@ -28,6 +28,7 @@ _Defined via the [`attributes`](https://developer.wordpress.org/block-editor/ref
 | `gradient` | `string` | — | — |
 | `customGradient` | `string` | — | — |
 | `useFirstImageFromPost` | `boolean` | `false` | — |
+| `useFeaturedImageFocalPoint` | `boolean` | `false` | — |
 
 ## Supports
 

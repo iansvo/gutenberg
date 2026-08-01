@@ -1067,6 +1067,8 @@ _Parameters_
 -   _props.postType_ `string`: Post type.
 -   _props.noticeUI_ `Element`: UI for displaying notices.
 -   _props.noticeOperations_ `Object`: Operations for managing notices.
+-   _props.featuredImageFocalPoint_ `Object`: Current post focal point.
+-   _props.onUpdateFocalPoint_ `Function`: Function to update the post focal point.
 
 _Returns_
 
